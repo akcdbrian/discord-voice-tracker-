@@ -23,17 +23,6 @@ class VoiceTracker(commands.Cog):
             duration = int((now - join_time).total_seconds())
             db.close_session(session["id"], now_iso, duration)
 
-    async def on_startup_complete(self):
-        await self.bot.wait_until_ready()
-        now = datetime.now(timezone.utc)
-        now_iso = now.isoformat()
-        for guild in self.bot.guilds:
-            for vc in guild.voice_channels:
-                for member in vc.members:
-                    if not member.bot and member.id not in self.active_sessions:
-                        session_id = db.log_join(member.id, now_iso)
-                        self.active_sessions[member.id] = (session_id, now)
-
     @commands.Cog.listener()
     async def on_voice_state_update(
         self,

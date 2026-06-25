@@ -23,11 +23,10 @@ class VoiceTrackerBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Logged in as {self.user}", flush=True)
-        self.loop.create_task(self._on_startup())
+        self.loop.create_task(self._sync_commands())
 
-    async def _on_startup(self):
+    async def _sync_commands(self):
         await self.wait_until_ready()
-
         try:
             guild = discord.Object(id=GUILD_ID)
             self.tree.copy_global_to(guild=guild)
@@ -39,11 +38,6 @@ class VoiceTrackerBot(commands.Bot):
             print("Sync timed out — commands may already be registered", flush=True)
         except Exception as e:
             print(f"Sync error: {type(e).__name__}: {e}", flush=True)
-
-        voice_tracker = self.get_cog("VoiceTracker")
-        if voice_tracker:
-            await voice_tracker.on_startup_complete()
-            print("Tracking current voice channel users", flush=True)
 
 
 if __name__ == "__main__":
