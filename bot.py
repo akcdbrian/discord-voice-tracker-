@@ -34,11 +34,6 @@ class VoiceTrackerBot(commands.Bot):
             print(f"Sync error: {type(e).__name__}: {e}", flush=True)
 
 
-async def main():
-    bot = VoiceTrackerBot()
-    async with bot:
-        await bot.start(DISCORD_TOKEN)
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    bot = VoiceTrackerBot()
+    bot.run(DISCORD_TOKEN)
