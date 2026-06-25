@@ -1,7 +1,13 @@
+import traceback
+import sys
 import asyncio
 import discord
 from discord.ext import commands
 from config import DISCORD_TOKEN, GUILD_ID
+
+print("=== Starting bot ===", flush=True)
+print(f"Python version: {sys.version}", flush=True)
+print(f"discord.py version: {discord.__version__}", flush=True)
 
 
 class VoiceTrackerBot(commands.Bot):
@@ -35,5 +41,10 @@ class VoiceTrackerBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    bot = VoiceTrackerBot()
-    bot.run(DISCORD_TOKEN)
+    try:
+        bot = VoiceTrackerBot()
+        bot.run(DISCORD_TOKEN)
+    except Exception as e:
+        print(f"FATAL: {type(e).__name__}: {e}", flush=True)
+        traceback.print_exc()
+        sys.exit(1)
