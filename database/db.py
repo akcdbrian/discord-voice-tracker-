@@ -95,25 +95,39 @@ def get_daily_join_counts(user_id: int, days: int = 7):
 
 
 def get_daily_durations(user_id: int, days: int = 7):
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days)
     conn = get_connection()
+
     rows = conn.execute(
         """SELECT date, COALESCE(SUM(duration_seconds), 0) as total_seconds
            FROM voice_sessions
-           WHERE user_id = ? AND date >= ?
+           WHERE user_id = ? AND date >= ? AND leave_time IS NOT NULL
            GROUP BY date
            ORDER BY date""",
         (user_id, since.strftime("%Y-%m-%d")),
     ).fetchall()
-    conn.close()
 
     result = {}
     for r in rows:
         result[r["date"]] = r["total_seconds"]
 
+    active = conn.execute(
+        "SELECT date, join_time FROM voice_sessions WHERE user_id = ? AND leave_time IS NULL LIMIT 1",
+        (user_id,),
+    ).fetchone()
+
+    if active:
+        join_time = datetime.fromisoformat(active["join_time"])
+        ongoing = int((now - join_time).total_seconds())
+        active_date = active["date"]
+        result[active_date] = result.get(active_date, 0) + ongoing
+
+    conn.close()
+
     all_days = []
     for i in range(days):
-        day = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
+        day = (now - timedelta(days=i)).strftime("%Y-%m-%d")
         all_days.insert(0, {"date": day, "total_seconds": result.get(day, 0)})
 
     return all_days
