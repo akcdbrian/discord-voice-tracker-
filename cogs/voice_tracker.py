@@ -13,6 +13,7 @@ class VoiceTracker(commands.Cog):
     async def on_ready(self):
         db.init_db()
         self._close_dangling_sessions()
+        self._track_current_vc_users()
 
     def _close_dangling_sessions(self):
         now = datetime.now(timezone.utc)
@@ -22,6 +23,16 @@ class VoiceTracker(commands.Cog):
             join_time = datetime.fromisoformat(session["join_time"])
             duration = int((now - join_time).total_seconds())
             db.close_session(session["id"], now_iso, duration)
+
+    def _track_current_vc_users(self):
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        for vc in self.bot.get_all_channels():
+            if isinstance(vc, discord.VoiceChannel):
+                for member in vc.members:
+                    if not member.bot and member.id not in self.active_sessions:
+                        session_id = db.log_join(member.id, now_iso)
+                        self.active_sessions[member.id] = (session_id, now)
 
     @commands.Cog.listener()
     async def on_voice_state_update(
